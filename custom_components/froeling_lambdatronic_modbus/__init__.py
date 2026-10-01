@@ -14,12 +14,11 @@ from homeassistant.helpers import device_registry as dr, entity_registry as er
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 
-from .coordinator import FroelingDataUpdateCoordinator
+from .coordinator_custom import FroelingDataUpdateCoordinator
 from .modbus_controller import ModbusController
 
 DOMAIN = "froeling_lambdatronic_modbus"
 _LOGGER = logging.getLogger(__name__)
-
 CONFIG_SCHEMA = vol.Schema(
     {
         DOMAIN: vol.Schema(
@@ -96,7 +95,6 @@ async def async_cleanup_and_reload(hass: HomeAssistant, entry: ConfigEntry) -> N
         for cat_entities in old_entities_by_cat.values()
         for entity_id in cat_entities
     }
-
     new_options = entry.options
     new_entities_by_cat = new_options.get("entities", {})
     new_entity_ids = {
@@ -110,13 +108,11 @@ async def async_cleanup_and_reload(hass: HomeAssistant, entry: ConfigEntry) -> N
     if entity_ids_to_remove:
         ent_reg = er.async_get(hass)
         device_name = old_config.get("name", "Froeling")
-
         all_entities = [
             entity
             for entity in ent_reg.entities.values()
             if entity.config_entry_id == entry.entry_id
         ]
-
         for entity_entry in all_entities:
             prefix = f"{device_name}_"
             if entity_entry.unique_id.startswith(prefix):
@@ -124,7 +120,6 @@ async def async_cleanup_and_reload(hass: HomeAssistant, entry: ConfigEntry) -> N
                 if entity_id_from_unique_id in entity_ids_to_remove:
                     ent_reg.async_remove(entity_entry.entity_id)
                     _LOGGER.debug("Removed entity: %s", entity_entry.entity_id)
-
     if not new_entity_ids and old_entity_ids:
         dev_reg = dr.async_get(hass)
         device_name = old_config.get("name", "Froeling")
@@ -135,7 +130,6 @@ async def async_cleanup_and_reload(hass: HomeAssistant, entry: ConfigEntry) -> N
                 _LOGGER.debug("Removed device: %s", device_name)
             except Exception as e:
                 _LOGGER.warning("Could not remove device %s: %s", device_name, e)
-
     await hass.config_entries.async_reload(entry.entry_id)
 
 
@@ -143,7 +137,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up platform from a ConfigEntry."""
     hass.data.setdefault(DOMAIN, {})
     config = {**entry.data, **entry.options}
-
     controller = ModbusController(
         hass,
         config.get("host", ""),
@@ -158,7 +151,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
 
     await coordinator.async_config_entry_first_refresh()
-
     hass.data[DOMAIN][entry.entry_id] = {
         "config": config,
         "coordinator": coordinator,
