@@ -3274,3 +3274,6 @@ ENTITY_DEFINITIONS = {
         },
     },
 }
+from .custom_entity_definitions import apply_custom_entity_definitions
+
+apply_custom_entity_definitions(ENTITY_DEFINITIONS)
