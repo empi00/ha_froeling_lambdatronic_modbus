@@ -22,7 +22,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry, async_add_entitie
     config = entry["config"]
 
     enabled_entities = config.get("entities", {})
-
     sensors = []
     for category, entities in enabled_entities.items():
         if category in ENTITY_DEFINITIONS:
@@ -49,10 +48,17 @@ class FroelingSensor(CoordinatorEntity[FroelingDataUpdateCoordinator], SensorEnt
         self._entity_id = entity_id
         self._device_name = config["name"]
         self.entity_definition = coordinator._entity_definitions[entity_id]
-
         self._attr_unique_id = f"{self._device_name}_{self._entity_id}"
         self._attr_has_entity_name = True
-        self._attr_translation_key = self._entity_id
+
+        # Existing upstream entities continue to use translations.  Custom
+        # entities can define a direct name so we do not have to duplicate the
+        # very large translation JSON files in this fork.
+        custom_name = self.entity_definition.get("name")
+        if custom_name:
+            self._attr_name = custom_name
+        else:
+            self._attr_translation_key = self._entity_id
 
         self._attr_native_unit_of_measurement = self.entity_definition.get("unit")
         self._attr_device_class = self.entity_definition.get("device_class")
