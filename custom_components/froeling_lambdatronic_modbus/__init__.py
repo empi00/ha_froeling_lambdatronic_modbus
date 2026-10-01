@@ -14,6 +14,13 @@ from homeassistant.helpers import device_registry as dr, entity_registry as er
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 
+from .custom_entity_definitions import apply_custom_entity_definitions
+from .entity_definitions import ENTITY_DEFINITIONS
+
+# Apply fork-specific entities before the config flow/coordinator uses the
+# definition table. This keeps the large upstream entity_definitions.py intact.
+apply_custom_entity_definitions(ENTITY_DEFINITIONS)
+
 from .coordinator_custom import FroelingDataUpdateCoordinator
 from .modbus_controller import ModbusController
 

@@ -1,8 +1,7 @@
 """Additional calculated entities for the Fröling Lambdatronic Modbus integration.
 
-This module keeps the custom additions separate from the large upstream
-entity_definitions.py file.  entity_definitions.py imports and applies this
-module once at the end of the file.
+The additions are applied to the upstream ENTITY_DEFINITIONS at package import
+without modifying the large upstream entity_definitions.py file.
 """
 
 from __future__ import annotations
@@ -10,7 +9,9 @@ from __future__ import annotations
 from typing import Any
 
 
-def apply_custom_entity_definitions(entity_definitions: dict[str, dict[str, dict[str, Any]]]) -> None:
+def apply_custom_entity_definitions(
+    entity_definitions: dict[str, dict[str, dict[str, Any]]],
+) -> None:
     """Add/replace the custom solar and pellet sensor definitions."""
 
     austragung = entity_definitions["austragung"]
@@ -31,10 +32,11 @@ def apply_custom_entity_definitions(entity_definitions: dict[str, dict[str, dict
 
     solarthermie = entity_definitions["solarthermie"]
 
-    # Keep the original Modbus value in kW, but explicitly mark it as a
-    # measurement so Home Assistant treats it as instantaneous power.
+    # Keep the original Modbus value in kW and explicitly mark it as an
+    # instantaneous power measurement.
     solarthermie["aktuelle_leistung_des_solar_wmz"]["state_class"] = "measurement"
 
+    # Current power converted from kW to W.
     solarthermie["aktuelle_leistung_des_solar_wmz_w"] = {
         "name": "Aktuelle Leistung des Solar WMZ W",
         "unit": "W",
@@ -50,6 +52,38 @@ def apply_custom_entity_definitions(entity_definitions: dict[str, dict[str, dict
         },
     }
 
+    # 5-minute rolling average in kW.
+    solarthermie["aktuelle_leistung_des_solar_wmz_average_5minutes"] = {
+        "name": "Aktuelle Leistung des Solar WMZ Average 5minutes",
+        "unit": "kW",
+        "decimals": 2,
+        "device_class": "power",
+        "state_class": "measurement",
+        "type": "sensor",
+        "calculation": {
+            "operation": "rolling_average",
+            "source": "aktuelle_leistung_des_solar_wmz",
+            "window_seconds": 300,
+        },
+    }
+
+    # 5-minute rolling average converted to W.
+    solarthermie["aktuelle_leistung_des_solar_wmz_average_5minutes_w"] = {
+        "name": "Aktuelle Leistung des Solar WMZ Average 5minutes W",
+        "unit": "W",
+        "decimals": 0,
+        "device_class": "power",
+        "state_class": "measurement",
+        "type": "sensor",
+        "calculation": {
+            "operation": "rolling_average",
+            "source": "aktuelle_leistung_des_solar_wmz",
+            "window_seconds": 300,
+            "multiplier": 1000,
+        },
+    }
+
+    # 10-minute rolling average in kW.
     solarthermie["aktuelle_leistung_des_solar_wmz_average_10minutes"] = {
         "name": "Aktuelle Leistung des Solar WMZ Average 10minutes",
         "unit": "kW",
@@ -64,6 +98,7 @@ def apply_custom_entity_definitions(entity_definitions: dict[str, dict[str, dict
         },
     }
 
+    # 10-minute rolling average converted to W.
     solarthermie["aktuelle_leistung_des_solar_wmz_average_10minutes_w"] = {
         "name": "Aktuelle Leistung des Solar WMZ Average 10minutes W",
         "unit": "W",
